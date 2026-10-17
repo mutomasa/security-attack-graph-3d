@@ -51,6 +51,9 @@ uv run python scripts/eval_llm.py   # デモ質問 7 問の intent 正答率・�
 |---|---|---|
 | Qwen3-1.7B（既定） | 7/7 | 7/7 |
 | Qwen2.5-1.5B-Instruct | 7/7 | 3/7 |
+| Qwen2.5-7B-Instruct-AWQ | 7/7 | 0/7（ノード名を和訳。system 指示・出力例でも改善せず） |
+
+7B-AWQ を A1000 8GB で動かす場合: `VLLM_MODEL=Qwen/Qwen2.5-7B-Instruct-AWQ VLLM_MAX_LEN=2048 VLLM_GPU_UTIL=0.95 VLLM_EXTRA_ARGS=--enforce-eager ./scripts/run_vllm.sh`（GPU 約 7.7GB）
 
 ## テスト
 

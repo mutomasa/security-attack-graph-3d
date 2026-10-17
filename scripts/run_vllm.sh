@@ -8,7 +8,11 @@ PORT="${VLLM_PORT:-8001}"
 if ! command -v nvcc >/dev/null 2>&1; then
   export VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER:-0}"
 fi
+# Larger models (e.g. Qwen2.5-7B-Instruct-AWQ on 8GB) need:
+#   VLLM_MAX_LEN=2048 VLLM_GPU_UTIL=0.95 VLLM_EXTRA_ARGS=--enforce-eager
+# shellcheck disable=SC2086
 exec vllm serve "$MODEL" \
   --port "$PORT" \
-  --max-model-len 4096 \
-  --gpu-memory-utilization "${VLLM_GPU_UTIL:-0.85}"
+  --max-model-len "${VLLM_MAX_LEN:-4096}" \
+  --gpu-memory-utilization "${VLLM_GPU_UTIL:-0.85}" \
+  ${VLLM_EXTRA_ARGS:-}
