@@ -51,16 +51,26 @@ class TemplateSummarizer:
         return f"最も危険な経路（スコア {path.score}）は、" + "、".join(steps) + "経路です。"
 
 
+# Share of path node labels an LLM explanation must quote verbatim; below this it has drifted
+# (translated names, generic advice) and is discarded.
+MIN_LABEL_COVERAGE = 0.5
+
+
 class LLMSummarizer:
-    def __init__(self, llm: LLMClient) -> None:
+    def __init__(self, llm: LLMClient, min_label_coverage: float = MIN_LABEL_COVERAGE) -> None:
         self._llm = llm
         self._template = load_prompt("summary_prompt.txt")
+        self._min_coverage = min_label_coverage
 
     def summarize(self, question: str, path: AttackPath | None) -> str:
         if path is None:
             return TemplateSummarizer().summarize(question, path)
         prompt = render_prompt(self._template, question=question, score=path.score, path=format_path(path))
-        return self._llm.complete(prompt, max_tokens=300).strip()
+        text = self._llm.complete(prompt, max_tokens=300).strip()
+        coverage = label_coverage(text, path)
+        if coverage < self._min_coverage:
+            raise LLMError(f"explanation quotes only {coverage:.0%} of path labels")
+        return text
 
 
 class SafeSummarizer:
@@ -90,6 +100,11 @@ def _phrase(edge_type: EdgeType, src: Node, tgt: Node) -> str:
     if edge_type == EdgeType.LEADS_TO:
         template = LEADS_TO_PHRASES.get(tgt.type, template)
     return template.format(src=src.label, tgt=tgt.label)
+
+
+def label_coverage(text: str, path: AttackPath) -> float:
+    labels = {n.label for n in path.nodes}
+    return sum(label in text for label in labels) / len(labels)
 
 
 def format_path(path: AttackPath) -> str:

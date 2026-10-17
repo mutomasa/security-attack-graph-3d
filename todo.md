@@ -67,11 +67,13 @@
 5. #9 feature/backend-api
 6. #11 feature/threejs-viewer
 7. #12 feature/streamlit-ui
-8. feature/demo-polish
+8. #14 feature/demo-polish
+9. feature/llm-tuning
 
 ## 次にやること（MVP 後）
 - [ ] 双方向 Streamlit コンポーネント化（#10）
-- [ ] 3B 以上 / AWQ モデルでの説明品質比較、guided_json 化、説明のポストチェック（#7）
+- [x] 説明のポストチェック・モデル比較（Qwen3-1.7B を既定に）（#7）
+- [ ] 3B 以上 / AWQ モデルでの説明品質比較（要ダウンロード）、guided_json 化（#7）
 - [ ] k-shortest paths / GDS への置き換え（#5）
 - [ ] CVSS / EPSS ベースのスコアリング（#4, 設計書 §20.1）
 - [ ] 経路ごとの対策提案（どのノードを断てば Top 経路が消えるか）

@@ -122,14 +122,16 @@ def assign_endpoints(intent_type: IntentType, mentioned: list[str]) -> tuple[str
 
 
 def prefer_mentioned_endpoints(intent: Intent, mentioned: list[str]) -> Intent:
-    """Labels literally present in the question beat the LLM's guess; the LLM still decides the intent."""
-    source, target = assign_endpoints(intent.intent, mentioned)
-    if source is None and target is None:
+    """If the question names any node, endpoints come from the question and the LLM only decides the intent.
+
+    Small models fill unmentioned endpoints with plausible-looking but wrong labels (e.g. source "Internal"
+    for "S3 Bucket に到達するまでに必要な権限は？"), so unmentioned endpoints fall back to the scenario
+    defaults in apply_guardrails. Only when nothing is mentioned (e.g. "SAが漏れたら？") is the LLM trusted.
+    """
+    if not mentioned:
         return intent
-    update = {"source": source or intent.source, "target": target or intent.target}
-    if intent.intent == IntentType.BLAST_RADIUS:
-        update["target"] = None
-    return intent.model_copy(update=update)
+    source, target = assign_endpoints(intent.intent, mentioned)
+    return intent.model_copy(update={"source": source, "target": target})
 
 
 def apply_guardrails(intent: Intent, scenario: Scenario) -> Intent:
@@ -139,6 +141,8 @@ def apply_guardrails(intent: Intent, scenario: Scenario) -> Intent:
     target = intent.target if intent.target in labels else None
     if target is None and intent.intent != IntentType.BLAST_RADIUS:
         target = scenario.default_target
+    if source == target:
+        source = scenario.default_source
     allowed = [t for t in intent.path_types if t in ATTACK_EDGE_TYPES] or list(ATTACK_EDGE_TYPES)
     depth = max(1, min(intent.max_depth, MAX_PATH_DEPTH))
     return intent.model_copy(update={"source": source, "target": target, "path_types": allowed, "max_depth": depth})
