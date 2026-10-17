@@ -283,4 +283,17 @@ window.addEventListener("resize", () => {
 });
 
 // Expose for debugging / automated checks.
-window.attackGraph = { nodeCount: nodeObjects.size, edgeCount: edgeObjects.length, select: (id) => select(nodeObjects.get(id) || null) };
+function screenPosition(id) {
+  const obj = nodeObjects.get(id);
+  if (!obj) return null;
+  const v = obj.mesh.getWorldPosition(new THREE.Vector3()).project(camera);
+  const rect = renderer.domElement.getBoundingClientRect();
+  return { x: rect.left + ((v.x + 1) / 2) * rect.width, y: rect.top + ((1 - v.y) / 2) * rect.height };
+}
+
+window.attackGraph = {
+  nodeCount: nodeObjects.size,
+  edgeCount: edgeObjects.length,
+  select: (id) => select(nodeObjects.get(id) || null),
+  screenPosition,
+};

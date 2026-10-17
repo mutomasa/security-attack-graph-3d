@@ -59,6 +59,10 @@
 - #10 components.html は一方向 → iframe 内詳細パネル + selectbox で代替
 - #13 compose プロジェクト名が `docker` で他プロジェクトと衝突 → `name:` を明示
 
+## Step 8: README / デモ GIF (`feature/demo-gif`)
+- [x] 字幕付きデモ GIF（`scripts/record_demo.py` で自動撮影）
+- [x] README をプロジェクトの詳細解説に刷新（アーキテクチャ図・スコア・LLM・評価）
+
 ## PR（スタック構成・上から順にマージ）
 1. #1 feature/ontology-seed → main
 2. #3 feature/neo4j-graph-store
@@ -69,7 +73,8 @@
 7. #12 feature/streamlit-ui
 8. #14 feature/demo-polish
 9. #15 feature/llm-tuning
-10. feature/guided-decoding
+10. #16 feature/guided-decoding
+11. feature/demo-gif
 
 ## 次にやること（MVP 後）
 - [ ] 双方向 Streamlit コンポーネント化（#10）
