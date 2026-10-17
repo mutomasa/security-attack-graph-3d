@@ -7,10 +7,10 @@
 - [x] uv プロジェクト初期化 / README / todo.md
 
 ## Step 1: Graph モデル (`feature/ontology-seed`, `feature/neo4j-graph-store`)
-- [ ] オントロジー定義（ノード種別・エッジ種別を一元管理）
-- [ ] Pydantic スキーマ（Node / Edge / Graph / Path）
-- [ ] Seed YAML: Scenario A / B / C
-- [ ] Seed ローダ + バリデーション
+- [x] オントロジー定義（ノード種別・エッジ種別を一元管理）
+- [x] Pydantic スキーマ（Node / Edge / Graph / Path）
+- [x] Seed YAML: Scenario A / B / C
+- [x] Seed ローダ + バリデーション
 - [ ] docker-compose で Neo4j 起動（ポート 17474/17687）
 - [ ] GraphRepository: Neo4j 実装 + インメモリ実装
 - [ ] seed スクリプト

@@ -1,0 +1,53 @@
+scenario:
+  id: demo_company_a
+  name: "Scenario A: Web侵入→S3到達"
+  description: "公開 Web Server の RCE から認証情報を奪取し、Service Account 経由で S3 の顧客データに到達する"
+  default_source: Internet
+  default_target: Customer Data
+
+nodes:
+  - {id: a_internet, type: NetworkZone, label: Internet, zone: external}
+  - {id: a_dmz, type: NetworkZone, label: DMZ, zone: dmz}
+  - {id: a_internal, type: NetworkZone, label: Internal, zone: internal}
+  - {id: a_web, type: Asset, label: Web Server, category: Compute, criticality: 4, environment: prod}
+  - {id: a_app, type: Asset, label: Application, category: Application, criticality: 4, environment: prod}
+  - {id: a_vpn, type: Asset, label: VPN Gateway, category: Network, criticality: 3, environment: prod}
+  - {id: a_s3, type: Asset, label: S3 Bucket, category: Storage, criticality: 5, environment: prod}
+  - {id: a_db, type: Asset, label: Customer DB, category: Database, criticality: 5, environment: prod}
+  - {id: a_wiki, type: Asset, label: Internal Wiki, category: Application, criticality: 2, environment: prod}
+  - {id: a_cve, type: Vulnerability, label: CVE-XXXX, severity: 9.1, exploitability: 0.9, description: Remote Code Execution}
+  - {id: a_vpn_weak, type: Vulnerability, label: Weak VPN Password, severity: 6.5, exploitability: 0.4, description: Password policy misconfiguration}
+  - {id: a_wiki_xss, type: Vulnerability, label: CVE-YYYY, severity: 4.3, exploitability: 0.6, description: Stored XSS}
+  - {id: a_secret, type: Secret, label: Credential Leak, secret_type: AccessKey, description: Web Server の環境変数に置かれた AWS アクセスキー}
+  - {id: a_svc, type: Identity, label: Service Account, identity_type: ServiceAccount, privilege: 4, criticality: 5}
+  - {id: a_admin, type: Identity, label: it-admin, identity_type: User, privilege: 5, criticality: 5}
+  - {id: a_perm_s3, type: Permission, label: "s3:GetObject", privilege: 4}
+  - {id: a_perm_db, type: Permission, label: "rds:Connect", privilege: 4}
+  - {id: a_lateral, type: AttackTechnique, label: Lateral Movement, mitre_id: TA0008}
+  - {id: a_data, type: Data, label: Customer Data, sensitivity: high, confidentiality_impact: 5}
+  - {id: a_docs, type: Data, label: Internal Docs, sensitivity: low, confidentiality_impact: 2}
+
+edges:
+  - {source: a_internet, target: a_web, type: EXPOSED_TO}
+  - {source: a_internet, target: a_vpn, type: EXPOSED_TO}
+  - {source: a_dmz, target: a_web, type: HOSTS}
+  - {source: a_internal, target: a_db, type: HOSTS}
+  - {source: a_web, target: a_cve, type: HAS_VULNERABILITY}
+  - {source: a_web, target: a_app, type: HOSTS}
+  - {source: a_cve, target: a_secret, type: LEADS_TO}
+  - {source: a_cve, target: a_app, type: CAN_EXPLOIT}
+  - {source: a_app, target: a_secret, type: USES_SECRET}
+  - {source: a_secret, target: a_svc, type: LEADS_TO}
+  - {source: a_svc, target: a_perm_s3, type: HAS_PERMISSION}
+  - {source: a_svc, target: a_s3, type: CAN_ACCESS}
+  - {source: a_s3, target: a_data, type: STORES}
+  - {source: a_vpn, target: a_vpn_weak, type: HAS_VULNERABILITY}
+  - {source: a_vpn_weak, target: a_admin, type: LEADS_TO}
+  - {source: a_admin, target: a_perm_db, type: HAS_PERMISSION}
+  - {source: a_admin, target: a_db, type: CAN_ACCESS}
+  - {source: a_admin, target: a_wiki, type: CAN_ACCESS}
+  - {source: a_db, target: a_data, type: STORES}
+  - {source: a_app, target: a_lateral, type: LEADS_TO}
+  - {source: a_lateral, target: a_db, type: LEADS_TO}
+  - {source: a_wiki, target: a_wiki_xss, type: HAS_VULNERABILITY}
+  - {source: a_wiki, target: a_docs, type: STORES}
