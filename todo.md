@@ -46,9 +46,10 @@
 - [x] 3D ビュー埋め込み・結果サマリ・経路一覧・ノード詳細・Cypher 表示
 
 ## Step 7: デモ仕上げ (`feature/demo-polish`)
-- [ ] 起動スクリプト（vLLM / backend / streamlit）
-- [ ] docs: ontology.md / api_spec.md / demo_script.md
-- [ ] README 手順
+- [x] 起動スクリプト（vLLM / backend / streamlit）
+- [x] docs: ontology.md / api_spec.md / demo_script.md
+- [x] README 手順
+- [x] GitHub Actions で pytest（Neo4j service container 付き）
 
 ## Issues
 - #2 Neo4j Community では読み取り専用ユーザー不可 → READ access mode + ガードレールで代替
@@ -56,3 +57,22 @@
 - #5 Cypher LIMIT がスコアリング前に効く / ノード一意性の後段フィルタ
 - #7 小型 Qwen のハルシネーション → depth/edge は LLM に決めさせない、説明はテンプレート + AI 解説の二本立て
 - #10 components.html は一方向 → iframe 内詳細パネル + selectbox で代替
+- #13 compose プロジェクト名が `docker` で他プロジェクトと衝突 → `name:` を明示
+
+## PR（スタック構成・上から順にマージ）
+1. #1 feature/ontology-seed → main
+2. #3 feature/neo4j-graph-store
+3. #6 feature/attack-path-engine
+4. #8 feature/llm-intent
+5. #9 feature/backend-api
+6. #11 feature/threejs-viewer
+7. #12 feature/streamlit-ui
+8. feature/demo-polish
+
+## 次にやること（MVP 後）
+- [ ] 双方向 Streamlit コンポーネント化（#10）
+- [ ] 3B 以上 / AWQ モデルでの説明品質比較、guided_json 化、説明のポストチェック（#7）
+- [ ] k-shortest paths / GDS への置き換え（#5）
+- [ ] CVSS / EPSS ベースのスコアリング（#4, 設計書 §20.1）
+- [ ] 経路ごとの対策提案（どのノードを断てば Top 経路が消えるか）
+- [ ] エクスポート（PNG / JSON、設計書 §14 優先度 低）
