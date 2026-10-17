@@ -16,9 +16,9 @@
 - [x] seed スクリプト
 
 ## Step 2: Attack Path 探索 (`feature/attack-path-engine`)
-- [ ] 経路探索（Cypher variable length path / networkx）
-- [ ] リスクスコアリング（設計書 §9.2）
-- [ ] Top N ランキング
+- [x] 経路探索（Cypher variable length path / networkx）
+- [x] リスクスコアリング（設計書 §9.2）
+- [x] Top N ランキング
 
 ## Step 3: LLM 統合 (`feature/llm-intent`)
 - [ ] intent 抽出（vLLM + Qwen, structured JSON）
@@ -51,3 +51,5 @@
 
 ## Issues
 - #2 Neo4j Community では読み取り専用ユーザー不可 → READ access mode + ガードレールで代替
+- #4 スコア式（全Σ）だと迂回経路が高スコア → impact を max 集計に変更
+- #5 Cypher LIMIT がスコアリング前に効く / ノード一意性の後段フィルタ

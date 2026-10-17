@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from backend.models.ontology import EdgeType, NodeType
+from backend.models.ontology import ATTACK_EDGE_TYPES, MAX_PATH_DEPTH, EdgeType, NodeType
 
 
 class Node(BaseModel):
@@ -59,10 +59,28 @@ class Scenario(BaseModel):
         return self
 
 
-class AttackPath(BaseModel):
-    score: float
+class PathQuery(BaseModel):
+    """Structured search condition. Either `target` (a node label/id) or `target_types` selects the end nodes."""
+
+    scenario_id: str
+    source: str
+    target: str | None = None
+    target_types: list[NodeType] = Field(default_factory=lambda: [NodeType.DATA])
+    edge_types: list[EdgeType] = Field(default_factory=lambda: list(ATTACK_EDGE_TYPES))
+    max_depth: int = Field(default=8, ge=1, le=MAX_PATH_DEPTH)
+    top_n: int = Field(default=3, ge=1, le=50)
+    min_score: float = 0.0
+    candidate_limit: int = Field(default=500, ge=1, le=5000)
+
+
+class PathCandidate(BaseModel):
     nodes: list[Node]
     edges: list[Edge]
+
+
+class AttackPath(PathCandidate):
+    score: float
+    score_breakdown: dict[str, float] = Field(default_factory=dict)
 
 
 def _ensure_unique(ids: list[str]) -> None:
