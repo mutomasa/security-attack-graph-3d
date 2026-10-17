@@ -22,3 +22,24 @@ def neo4j_settings() -> Neo4jSettings:
 def graph_backend() -> str:
     """'neo4j' or 'memory'."""
     return os.environ.get("GRAPH_BACKEND", "neo4j")
+
+
+@dataclass(frozen=True)
+class LLMSettings:
+    enabled: bool
+    base_url: str
+    model: str
+    timeout: float
+    disable_thinking: bool = True
+
+
+def llm_settings() -> LLMSettings:
+    return LLMSettings(
+        enabled=os.environ.get("LLM_ENABLED", "1") == "1",
+        # 8000 is often taken locally; scripts/run_vllm.sh serves on 8001.
+        base_url=os.environ.get("VLLM_BASE_URL", "http://localhost:8001/v1"),
+        model=os.environ.get("VLLM_MODEL", "Qwen/Qwen2.5-1.5B-Instruct"),
+        timeout=float(os.environ.get("LLM_TIMEOUT", "20")),
+        # Qwen3 emits <think> blocks by default; vLLM forwards this flag to the chat template.
+        disable_thinking=os.environ.get("LLM_DISABLE_THINKING", "1") == "1",
+    )
