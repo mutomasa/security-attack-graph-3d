@@ -11,9 +11,9 @@
 - [x] Pydantic スキーマ（Node / Edge / Graph / Path）
 - [x] Seed YAML: Scenario A / B / C
 - [x] Seed ローダ + バリデーション
-- [ ] docker-compose で Neo4j 起動（ポート 17474/17687）
-- [ ] GraphRepository: Neo4j 実装 + インメモリ実装
-- [ ] seed スクリプト
+- [x] docker-compose で Neo4j 起動（ポート 17474/17687）
+- [x] GraphRepository: Neo4j 実装 + インメモリ実装
+- [x] seed スクリプト
 
 ## Step 2: Attack Path 探索 (`feature/attack-path-engine`)
 - [ ] 経路探索（Cypher variable length path / networkx）
@@ -48,3 +48,6 @@
 - [ ] 起動スクリプト（vLLM / backend / streamlit）
 - [ ] docs: ontology.md / api_spec.md / demo_script.md
 - [ ] README 手順
+
+## Issues
+- #2 Neo4j Community では読み取り専用ユーザー不可 → READ access mode + ガードレールで代替

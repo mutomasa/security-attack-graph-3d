@@ -1,0 +1,19 @@
+services:
+  neo4j:
+    image: neo4j:5.23
+    container_name: attack-graph-neo4j
+    ports:
+      # 7474/7687 は別プロジェクトと衝突しやすいためずらしている
+      - "127.0.0.1:17474:7474"
+      - "127.0.0.1:17687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/attackgraph
+      NEO4J_server_memory_heap_max__size: 1G
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p attackgraph 'RETURN 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
