@@ -29,11 +29,12 @@
 - [x] プロンプトを `backend/prompts/` に分離
 
 ## Step 4: Backend API (`feature/backend-api`)
-- [ ] `POST /query`
-- [ ] `GET /graph/scenario/{scenario_id}`
-- [ ] `GET /node/{node_id}`
-- [ ] `POST /seed`
-- [ ] API テスト
+- [x] `POST /query`
+- [x] `GET /graph/scenario/{scenario_id}`
+- [x] `GET /node/{node_id}`
+- [x] `POST /seed`
+- [x] API テスト
+- [x] 追加: `GET /scenarios`, `GET /ontology`, `GET /health`
 
 ## Step 5: Three.js 可視化 (`feature/threejs-viewer`)
 - [ ] ノード色・形状（設計書 §11.3）
