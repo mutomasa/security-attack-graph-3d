@@ -79,9 +79,9 @@ def _service_with(llm):
 
 
 def test_llm_explanation_is_separate_from_template_summary():
-    llm = FakeLLM(['{"intent": "find_highest_risk_path", "source": "Internet", "target": "Customer Data"}', "AI解説"])
+    llm = FakeLLM(['{"intent": "find_highest_risk_path", "source": "Internet", "target": "Customer Data"}', "Internet → Web Server → CVE-XXXX → Credential Leak → Service Account → S3 Bucket → Customer Data"])
     result = _service_with(llm).run("顧客データに到達する最も危険な経路は？", "demo_company_a")
-    assert result.explanation == "AI解説"
+    assert result.explanation.startswith("Internet → Web Server")
     assert result.summary.startswith("最も危険な経路")
 
 

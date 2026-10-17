@@ -1,3 +1,5 @@
+import pytest
+
 from backend.models.schemas import AttackPath
 from backend.services.llm_service import LLMError
 from backend.services.summary_service import (
@@ -5,6 +7,7 @@ from backend.services.summary_service import (
     SafeSummarizer,
     TemplateSummarizer,
     format_path,
+    label_coverage,
 )
 
 PATH = AttackPath(
@@ -54,13 +57,28 @@ def test_template_summary_adds_start_when_first_step_omits_it():
     assert "Credential Leak を起点に" in TemplateSummarizer().summarize("q", sub)
 
 
+def test_llm_summary_with_translated_labels_is_rejected():
+    translated = "インターネットからウェブサーバーの脆弱性を突き、顧客データに到達します。"
+    with pytest.raises(LLMError, match="path labels"):
+        LLMSummarizer(FakeLLM(translated)).summarize("q", PATH)
+    assert SafeSummarizer(LLMSummarizer(FakeLLM(translated))).summarize("q", PATH) is None
+
+
+def test_label_coverage():
+    assert label_coverage(GOOD, PATH) == 6 / 7
+    assert label_coverage("", PATH) == 0
+
+
 def test_template_summary_without_path():
     assert "見つかりませんでした" in TemplateSummarizer().summarize("q", None)
 
 
+GOOD = "Internet から Web Server の CVE-XXXX を突き、Credential Leak で Service Account を奪い S3 Bucket に到達。"
+
+
 def test_llm_summary_receives_structured_path():
-    llm = FakeLLM(" 説明 ")
-    assert LLMSummarizer(llm).summarize("顧客データは？", PATH) == "説明"
+    llm = FakeLLM(f" {GOOD} ")
+    assert LLMSummarizer(llm).summarize("顧客データは？", PATH) == GOOD
     assert format_path(PATH) in llm.prompt
     assert "顧客データは？" in llm.prompt
 

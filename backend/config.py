@@ -38,7 +38,7 @@ def llm_settings() -> LLMSettings:
         enabled=os.environ.get("LLM_ENABLED", "1") == "1",
         # 8000 is often taken locally; scripts/run_vllm.sh serves on 8001.
         base_url=os.environ.get("VLLM_BASE_URL", "http://localhost:8001/v1"),
-        model=os.environ.get("VLLM_MODEL", "Qwen/Qwen2.5-1.5B-Instruct"),
+        model=os.environ.get("VLLM_MODEL", "Qwen/Qwen3-1.7B"),
         timeout=float(os.environ.get("LLM_TIMEOUT", "20")),
         # Qwen3 emits <think> blocks by default; vLLM forwards this flag to the chat template.
         disable_thinking=os.environ.get("LLM_DISABLE_THINKING", "1") == "1",
