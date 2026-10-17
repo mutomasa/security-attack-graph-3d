@@ -130,3 +130,53 @@ class QueryResult(BaseModel):
     explanation: str | None = None
     permissions: list[Node] = Field(default_factory=list)
     reached: list[Node] = Field(default_factory=list)
+
+
+class QueryRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    scenario: str
+    top_n: int = Field(default=3, ge=1, le=50)
+    max_depth: int | None = Field(default=None, ge=1, le=MAX_PATH_DEPTH)
+    min_score: float = 0.0
+
+    def options(self) -> "QueryOptions":
+        return QueryOptions(top_n=self.top_n, max_depth=self.max_depth, min_score=self.min_score)
+
+
+class QueryResponse(BaseModel):
+    """API shape from design §12.1: `intent` is the intent name; the full Intent is in `intent_detail`."""
+
+    intent: IntentType
+    intent_detail: Intent
+    cypher: str
+    paths: list[AttackPath]
+    summary: str
+    explanation: str | None = None
+    permissions: list[Node] = Field(default_factory=list)
+    reached: list[Node] = Field(default_factory=list)
+
+    @classmethod
+    def from_result(cls, result: "QueryResult") -> "QueryResponse":
+        return cls(intent=result.intent.intent, intent_detail=result.intent, **result.model_dump(exclude={"intent"}))
+
+
+class ScenarioSummary(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    default_source: str
+    default_target: str
+
+
+class ScenarioGraph(BaseModel):
+    scenario: ScenarioSummary
+    nodes: list[Node]
+    edges: list[Edge]
+
+
+class NodeDetail(BaseModel):
+    node: Node
+    scenario_id: str
+    outgoing: list[Edge]
+    incoming: list[Edge]
+    neighbors: list[Node]
