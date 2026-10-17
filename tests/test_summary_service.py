@@ -37,7 +37,7 @@ class FakeLLM:
         self.reply = reply
         self.prompt = ""
 
-    def complete(self, prompt, *, json_mode=False, max_tokens=256):
+    def complete(self, prompt, **kwargs):
         self.prompt = prompt
         if isinstance(self.reply, Exception):
             raise self.reply

@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from backend.models.ontology import ATTACK_EDGE_TYPES, MAX_PATH_DEPTH
 from backend.models.schemas import Intent, IntentType, Scenario
+from backend.services.guided_schemas import intent_schema
 from backend.services.llm_service import LLMClient, LLMError, extract_json_object, load_prompt, render_prompt
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,15 @@ class RuleBasedIntentParser:
 
 
 class LLMIntentParser:
-    def __init__(self, llm: LLMClient) -> None:
+    def __init__(self, llm: LLMClient, guided: bool = False) -> None:
         self._llm = llm
+        self._guided = guided
         self._template = load_prompt("intent_prompt.txt")
 
     def parse(self, question: str, scenario: Scenario) -> Intent:
         prompt = self._build_prompt(scenario) + f"\n\n質問: {question}"
-        raw = extract_json_object(self._llm.complete(prompt, json_mode=True))
+        schema = intent_schema(scenario) if self._guided else None
+        raw = extract_json_object(self._llm.complete(prompt, json_mode=True, json_schema=schema))
         # Edge types are fixed by the ontology and depth by the UI; small models pick both badly.
         for key in ("path_types", "max_depth", "parsed_by"):
             raw.pop(key, None)
