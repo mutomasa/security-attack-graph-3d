@@ -1,3 +1,6 @@
+# Explicit project name: the directory is called "docker", which other local projects also use.
+name: security-attack-graph-3d
+
 services:
   neo4j:
     image: neo4j:5.23
