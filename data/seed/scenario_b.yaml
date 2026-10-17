@@ -1,0 +1,46 @@
+scenario:
+  id: demo_company_b
+  name: "Scenario B: API Key 漏洩"
+  description: "公開 GitHub リポジトリにハードコードされた API Key から CI/CD とクラウドロールを奪取し、DB の顧客データに到達する"
+  default_source: Internet
+  default_target: Customer Data
+
+nodes:
+  - {id: b_internet, type: NetworkZone, label: Internet, zone: external}
+  - {id: b_repo, type: Asset, label: GitHub Repo, category: SourceCode, criticality: 3, environment: public}
+  - {id: b_cicd, type: Asset, label: CI/CD Pipeline, category: DevOps, criticality: 4, environment: prod}
+  - {id: b_staging, type: Asset, label: Staging Env, category: Compute, criticality: 2, environment: staging}
+  - {id: b_db, type: Asset, label: Customer DB, category: Database, criticality: 5, environment: prod}
+  - {id: b_hardcoded, type: Vulnerability, label: Hardcoded Secret, severity: 8.2, exploitability: 0.95, description: リポジトリ履歴に API Key がコミットされている}
+  - {id: b_runner_vuln, type: Vulnerability, label: Self-hosted Runner Misconfig, severity: 7.0, exploitability: 0.5, description: fork PR から self-hosted runner でコード実行可能}
+  - {id: b_apikey, type: Secret, label: CI Deploy API Key, secret_type: ApiKey}
+  - {id: b_db_password, type: Secret, label: DB Password, secret_type: Password}
+  - {id: b_role, type: Identity, label: Cloud Deploy Role, identity_type: IAMRole, privilege: 5, criticality: 5}
+  - {id: b_dev, type: Identity, label: developer, identity_type: User, privilege: 2, criticality: 2}
+  - {id: b_perm_assume, type: Permission, label: AssumeRole, privilege: 5}
+  - {id: b_perm_db, type: Permission, label: "rds:Connect", privilege: 4}
+  - {id: b_supply, type: AttackTechnique, label: Supply Chain Compromise, mitre_id: T1195}
+  - {id: b_data, type: Data, label: Customer Data, sensitivity: high, confidentiality_impact: 5}
+  - {id: b_testdata, type: Data, label: Test Data, sensitivity: low, confidentiality_impact: 1}
+
+edges:
+  - {source: b_internet, target: b_repo, type: EXPOSED_TO}
+  - {source: b_repo, target: b_hardcoded, type: HAS_VULNERABILITY}
+  - {source: b_repo, target: b_runner_vuln, type: HAS_VULNERABILITY}
+  - {source: b_hardcoded, target: b_apikey, type: LEADS_TO}
+  - {source: b_runner_vuln, target: b_supply, type: LEADS_TO}
+  - {source: b_supply, target: b_cicd, type: LEADS_TO}
+  - {source: b_apikey, target: b_cicd, type: LEADS_TO}
+  - {source: b_cicd, target: b_apikey, type: USES_SECRET}
+  - {source: b_cicd, target: b_db_password, type: USES_SECRET}
+  - {source: b_apikey, target: b_role, type: LEADS_TO}
+  - {source: b_cicd, target: b_role, type: LEADS_TO}
+  - {source: b_role, target: b_perm_assume, type: HAS_PERMISSION}
+  - {source: b_role, target: b_perm_db, type: HAS_PERMISSION}
+  - {source: b_role, target: b_db, type: CAN_ACCESS}
+  - {source: b_db_password, target: b_db, type: LEADS_TO}
+  - {source: b_db, target: b_data, type: STORES}
+  - {source: b_dev, target: b_repo, type: CAN_ACCESS}
+  - {source: b_dev, target: b_staging, type: CAN_ACCESS}
+  - {source: b_cicd, target: b_staging, type: CAN_REACH}
+  - {source: b_staging, target: b_testdata, type: STORES}

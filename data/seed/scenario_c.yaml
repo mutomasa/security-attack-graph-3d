@@ -1,0 +1,36 @@
+scenario:
+  id: demo_company_c
+  name: "Scenario C: 認可過剰"
+  description: "社内ユーザーが過剰な信頼ポリシーで強権限ロールを引き受け、Data Lake の機密テーブルに到達する"
+  default_source: Internal User
+  default_target: Sensitive Table
+
+nodes:
+  - {id: c_internal, type: NetworkZone, label: Internal, zone: internal}
+  - {id: c_user, type: Identity, label: Internal User, identity_type: User, privilege: 2, criticality: 2}
+  - {id: c_role, type: Identity, label: Over-privileged Role, identity_type: IAMRole, privilege: 5, criticality: 5}
+  - {id: c_analyst_role, type: Identity, label: Analyst Role, identity_type: IAMRole, privilege: 2, criticality: 3}
+  - {id: c_trust, type: Vulnerability, label: Excessive Trust Policy, severity: 7.5, exploitability: 0.8, description: "Principal: * の信頼ポリシーで誰でも AssumeRole 可能"}
+  - {id: c_perm_assume, type: Permission, label: AssumeRole, privilege: 5}
+  - {id: c_perm_all, type: Permission, label: "s3:*", privilege: 5}
+  - {id: c_perm_read, type: Permission, label: "athena:StartQuery", privilege: 2}
+  - {id: c_lake, type: Asset, label: Data Lake, category: Storage, criticality: 5, environment: prod}
+  - {id: c_bi, type: Asset, label: BI Dashboard, category: Application, criticality: 2, environment: prod}
+  - {id: c_priv_esc, type: AttackTechnique, label: Privilege Escalation, mitre_id: TA0004}
+  - {id: c_table, type: Data, label: Sensitive Table, sensitivity: high, confidentiality_impact: 5}
+  - {id: c_agg, type: Data, label: Aggregated KPI, sensitivity: low, confidentiality_impact: 1}
+
+edges:
+  - {source: c_internal, target: c_user, type: CAN_REACH}
+  - {source: c_user, target: c_perm_assume, type: HAS_PERMISSION}
+  - {source: c_user, target: c_trust, type: LEADS_TO}
+  - {source: c_trust, target: c_priv_esc, type: LEADS_TO}
+  - {source: c_priv_esc, target: c_role, type: LEADS_TO}
+  - {source: c_role, target: c_perm_all, type: HAS_PERMISSION}
+  - {source: c_role, target: c_lake, type: CAN_ACCESS}
+  - {source: c_lake, target: c_table, type: STORES}
+  - {source: c_user, target: c_analyst_role, type: LEADS_TO}
+  - {source: c_analyst_role, target: c_perm_read, type: HAS_PERMISSION}
+  - {source: c_analyst_role, target: c_bi, type: CAN_ACCESS}
+  - {source: c_analyst_role, target: c_lake, type: CAN_ACCESS}
+  - {source: c_bi, target: c_agg, type: STORES}
