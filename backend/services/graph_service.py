@@ -3,11 +3,12 @@
 from collections import defaultdict
 from typing import Protocol
 
-from neo4j import Driver, GraphDatabase
+from neo4j import READ_ACCESS, Driver, GraphDatabase
 
 from backend.config import Neo4jSettings
 from backend.models.schemas import Edge, Graph, Node, PathCandidate, PathQuery, Scenario
 from backend.services.cypher_builder import build_path_query
+from backend.services.cypher_guard import validate_read_only_cypher
 from backend.services.nx_paths import find_paths_in_graph
 
 
@@ -83,7 +84,8 @@ class Neo4jGraphRepository:
 
     def find_paths(self, query: PathQuery) -> list[PathCandidate]:
         cypher = build_path_query(query)
-        with self._driver.session() as session:
+        validate_read_only_cypher(cypher.text)
+        with self._driver.session(default_access_mode=READ_ACCESS) as session:
             return session.execute_read(_read_paths, cypher.text, cypher.params)
 
 

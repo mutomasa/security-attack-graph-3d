@@ -21,12 +21,12 @@
 - [x] Top N ランキング
 
 ## Step 3: LLM 統合 (`feature/llm-intent`)
-- [ ] intent 抽出（vLLM + Qwen, structured JSON）
-- [ ] ルールベース fallback（LLM 未起動時）
-- [ ] intent → Cypher 生成（テンプレート）
-- [ ] Cypher ガードレール（読み取り専用・ラベル/エッジ許可リスト・深さ制限）
-- [ ] 結果説明文生成
-- [ ] プロンプトを `backend/prompts/` に分離
+- [x] intent 抽出（vLLM + Qwen, structured JSON）
+- [x] ルールベース fallback（LLM 未起動時）
+- [x] intent → Cypher 生成（テンプレート）
+- [x] Cypher ガードレール（読み取り専用・ラベル/エッジ許可リスト・深さ制限）
+- [x] 結果説明文生成
+- [x] プロンプトを `backend/prompts/` に分離
 
 ## Step 4: Backend API (`feature/backend-api`)
 - [ ] `POST /query`
@@ -53,3 +53,4 @@
 - #2 Neo4j Community では読み取り専用ユーザー不可 → READ access mode + ガードレールで代替
 - #4 スコア式（全Σ）だと迂回経路が高スコア → impact を max 集計に変更
 - #5 Cypher LIMIT がスコアリング前に効く / ノード一意性の後段フィルタ
+- #7 小型 Qwen のハルシネーション → depth/edge は LLM に決めさせない、説明はテンプレート + AI 解説の二本立て

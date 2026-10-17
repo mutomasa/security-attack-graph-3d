@@ -1,5 +1,6 @@
 """Pydantic schemas shared by the graph store, path engine and API."""
 
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -73,6 +74,24 @@ class PathQuery(BaseModel):
     candidate_limit: int = Field(default=500, ge=1, le=5000)
 
 
+class IntentType(StrEnum):
+    HIGHEST_RISK_PATH = "find_highest_risk_path"
+    LIST_ATTACK_PATHS = "list_attack_paths"
+    BLAST_RADIUS = "blast_radius"
+    REQUIRED_PERMISSIONS = "required_permissions"
+
+
+class Intent(BaseModel):
+    """Structured interpretation of a natural-language question (LLM intermediate output, design §10.2)."""
+
+    intent: IntentType = IntentType.HIGHEST_RISK_PATH
+    source: str | None = None
+    target: str | None = None
+    max_depth: int = Field(default=8, ge=1, le=MAX_PATH_DEPTH)
+    path_types: list[EdgeType] = Field(default_factory=lambda: list(ATTACK_EDGE_TYPES))
+    parsed_by: str = "rule"
+
+
 class PathCandidate(BaseModel):
     nodes: list[Node]
     edges: list[Edge]
@@ -95,3 +114,19 @@ def _ensure_edges_resolve(edges: list[Edge], ids: set[str]) -> None:
         missing = {e.source, e.target} - ids
         if missing:
             raise ValueError(f"edge {e.source}->{e.target} references unknown nodes: {sorted(missing)}")
+
+
+class QueryOptions(BaseModel):
+    top_n: int = Field(default=3, ge=1, le=50)
+    max_depth: int | None = Field(default=None, ge=1, le=MAX_PATH_DEPTH)
+    min_score: float = 0.0
+
+
+class QueryResult(BaseModel):
+    intent: Intent
+    cypher: str
+    paths: list[AttackPath]
+    summary: str
+    explanation: str | None = None
+    permissions: list[Node] = Field(default_factory=list)
+    reached: list[Node] = Field(default_factory=list)

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Attack path knowledge graph demo: Neo4j + Qwen + Three.js + Streamlit"
 requires-python = ">=3.11"
 dependencies = [
+    "httpx>=0.28.1",
     "neo4j>=6.4.1",
     "networkx>=3.6.1",
     "pydantic>=2.14.1",
