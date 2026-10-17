@@ -73,6 +73,27 @@ def test_labels_in_question_override_llm_endpoints():
     assert (result.source, result.target, result.parsed_by) == ("Service Account", None, "llm")
 
 
+@pytest.mark.parametrize(
+    ("llm_reply", "question", "source", "target"),
+    [
+        # Observed with Qwen2.5-1.5B: source == target -> no path at all
+        ('{"intent": "find_highest_risk_path", "source": "Customer Data", "target": "Customer Data"}',
+         "顧客データに到達する最も危険な経路は？", "Internet", "Customer Data"),
+        # Observed with Qwen2.5-1.5B: an unmentioned but existing label as source
+        ('{"intent": "required_permissions", "source": "Internal", "target": "S3 Bucket"}',
+         "S3 Bucket に到達するまでに必要な権限は？", "Internet", "S3 Bucket"),
+    ],
+)
+def test_unmentioned_llm_endpoints_fall_back_to_defaults(llm_reply, question, source, target):
+    result = _parse(question, llm=FakeLLM(llm_reply))
+    assert (result.source, result.target, result.parsed_by) == (source, target, "llm")
+
+
+def test_guardrails_reset_source_equal_to_target():
+    guarded = apply_guardrails(Intent(source="Customer Data", target="Customer Data"), A)
+    assert (guarded.source, guarded.target) == ("Internet", "Customer Data")
+
+
 @pytest.mark.parametrize("reply", [LLMError("down"), "not json", '{"intent": "drop_database"}', '{"source": 1}'])
 def test_invalid_llm_output_falls_back_to_rules(reply):
     result = _parse("顧客データに到達する最も危険な経路は？", llm=FakeLLM(reply))

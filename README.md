@@ -20,7 +20,7 @@ Streamlit UI ──HTTP──▶ FastAPI ──▶ Intent (vLLM + Qwen / ルー�
 uv sync
 
 # 1. LLM（任意。無くてもルールベース解析 + テンプレート説明で動く）
-./scripts/run_vllm.sh                  # Qwen/Qwen2.5-1.5B-Instruct を :8001 で起動
+./scripts/run_vllm.sh                  # Qwen/Qwen3-1.7B を :8001 で起動
 
 # 2. バックエンド（Neo4j 起動 → seed → FastAPI :8010）
 ./scripts/run_backend.sh
@@ -37,9 +37,20 @@ uv sync
 | `GRAPH_BACKEND` | `neo4j` | `memory` にするとインメモリグラフ（Neo4j 不要） |
 | `NEO4J_URI` / `NEO4J_USER` / `NEO4J_PASSWORD` | `bolt://localhost:17687` / `neo4j` / `attackgraph` | 7474/7687 は他プロジェクトと衝突しやすいので 17474/17687 |
 | `LLM_ENABLED` | `1` | `0` で LLM を使わない |
-| `VLLM_BASE_URL` / `VLLM_MODEL` | `http://localhost:8001/v1` / `Qwen/Qwen2.5-1.5B-Instruct` | OpenAI 互換エンドポイント |
+| `VLLM_BASE_URL` / `VLLM_MODEL` | `http://localhost:8001/v1` / `Qwen/Qwen3-1.7B` | OpenAI 互換エンドポイント |
 | `LLM_DISABLE_THINKING` | `1` | Qwen3 の thinking 出力を抑止 |
 | `BACKEND_URL` | `http://localhost:8010` | Streamlit から見たバックエンド |
+
+## LLM の評価
+
+```bash
+uv run python scripts/eval_llm.py   # デモ質問 7 問の intent 正答率・解説のノード名カバー率
+```
+
+| モデル | intent | 解説（ポストチェック通過） |
+|---|---|---|
+| Qwen3-1.7B（既定） | 7/7 | 7/7 |
+| Qwen2.5-1.5B-Instruct | 7/7 | 3/7 |
 
 ## テスト
 
