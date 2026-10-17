@@ -9,7 +9,8 @@ from typing import Protocol
 
 from backend.models.ontology import EdgeType, NodeType
 from backend.models.schemas import AttackPath, Node
-from backend.services.llm_service import LLMClient, LLMError, load_prompt, render_prompt
+from backend.services.guided_schemas import explanation_schema
+from backend.services.llm_service import LLMClient, LLMError, extract_json_object, load_prompt, render_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,44 @@ class LLMSummarizer:
         if coverage < self._min_coverage:
             raise LLMError(f"explanation quotes only {coverage:.0%} of path labels")
         return text
+
+
+class GuidedLLMSummarizer:
+    """LLM explanation under a JSON Schema: node names are fixed per step / chosen from the path,
+    so the model can only write the free-text parts (what happens at each node, the root cause)."""
+
+    def __init__(self, llm: LLMClient) -> None:
+        self._llm = llm
+        self._template = load_prompt("guided_summary_prompt.txt")
+
+    def summarize(self, question: str, path: AttackPath | None) -> str:
+        if path is None:
+            return TemplateSummarizer().summarize(question, path)
+        prompt = render_prompt(self._template, question=question, score=path.score, path=format_path(path))
+        raw = extract_json_object(self._llm.complete(prompt, json_schema=explanation_schema(path), max_tokens=700))
+        return render_guided_explanation(validate_guided_explanation(raw, path))
+
+
+def validate_guided_explanation(raw: dict, path: AttackPath) -> dict:
+    """The server enforces the schema; re-check so a non-guided backend cannot slip through."""
+    labels = [n.label for n in path.nodes]
+    steps = raw.get("steps") or []
+    if not all(isinstance(s, dict) for s in steps) or [s.get("node") for s in steps] != labels:
+        raise LLMError("guided explanation steps do not follow the path")
+    if raw.get("priority_fix") not in labels:
+        raise LLMError(f"priority_fix is not on the path: {raw.get('priority_fix')!r}")
+    if not all(str(s.get("event", "")).strip() for s in steps):
+        raise LLMError("guided explanation has empty steps")
+    return raw
+
+
+def render_guided_explanation(raw: dict) -> str:
+    lines = [f"{i}. **{s['node']}** — {s['event'].strip()}" for i, s in enumerate(raw["steps"], start=1)]
+    root_cause = str(raw.get("root_cause", "")).strip()
+    if root_cause:
+        lines.append(f"\n根本原因: {root_cause}")
+    lines.append(f"\n最優先で塞ぐべき箇所: **{raw['priority_fix']}**")
+    return "\n".join(lines)
 
 
 class SafeSummarizer:

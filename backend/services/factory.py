@@ -7,7 +7,7 @@ from backend.services.llm_service import OpenAICompatibleClient
 from backend.services.query_service import QueryService
 from backend.services.seed_loader import load_all_scenarios
 from backend.services.seeder import seed_repository
-from backend.services.summary_service import LLMSummarizer, SafeSummarizer
+from backend.services.summary_service import GuidedLLMSummarizer, LLMSummarizer, SafeSummarizer
 
 
 def build_repository(backend: str | None = None) -> GraphRepository:
@@ -24,6 +24,16 @@ def build_query_service(repo: GraphRepository, settings: LLMSettings | None = No
     return QueryService(
         scenarios=load_all_scenarios(),
         repo=repo,
-        intent_parser=FallbackIntentParser(LLMIntentParser(llm) if llm else None, RuleBasedIntentParser()),
-        explainer=SafeSummarizer(LLMSummarizer(llm)) if llm else None,
+        intent_parser=FallbackIntentParser(_intent_parser(llm, settings), RuleBasedIntentParser()),
+        explainer=_explainer(llm, settings),
     )
+
+
+def _intent_parser(llm, settings: LLMSettings) -> LLMIntentParser | None:
+    return LLMIntentParser(llm, guided=settings.guided) if llm else None
+
+
+def _explainer(llm, settings: LLMSettings) -> SafeSummarizer | None:
+    if not llm:
+        return None
+    return SafeSummarizer(GuidedLLMSummarizer(llm) if settings.guided else LLMSummarizer(llm))

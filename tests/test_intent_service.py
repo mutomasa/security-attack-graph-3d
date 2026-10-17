@@ -21,7 +21,7 @@ class FakeLLM:
         self.reply = reply
         self.prompts: list[str] = []
 
-    def complete(self, prompt, *, json_mode=False, max_tokens=256):
+    def complete(self, prompt, **kwargs):
         self.prompts.append(prompt)
         if isinstance(self.reply, Exception):
             raise self.reply
