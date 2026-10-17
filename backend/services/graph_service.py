@@ -3,10 +3,13 @@
 from collections import defaultdict
 from typing import Protocol
 
-from neo4j import Driver, GraphDatabase
+from neo4j import READ_ACCESS, Driver, GraphDatabase
 
 from backend.config import Neo4jSettings
-from backend.models.schemas import Edge, Graph, Node, Scenario
+from backend.models.schemas import Edge, Graph, Node, PathCandidate, PathQuery, Scenario
+from backend.services.cypher_builder import build_path_query
+from backend.services.cypher_guard import validate_read_only_cypher
+from backend.services.nx_paths import find_paths_in_graph
 
 
 class GraphRepository(Protocol):
@@ -17,6 +20,8 @@ class GraphRepository(Protocol):
     def get_node(self, node_id: str) -> Node | None: ...
 
     def list_scenario_ids(self) -> list[str]: ...
+
+    def find_paths(self, query: PathQuery) -> list[PathCandidate]: ...
 
 
 class InMemoryGraphRepository:
@@ -38,6 +43,10 @@ class InMemoryGraphRepository:
 
     def list_scenario_ids(self) -> list[str]:
         return sorted(self._graphs)
+
+    def find_paths(self, query: PathQuery) -> list[PathCandidate]:
+        graph = self._graphs.get(query.scenario_id)
+        return find_paths_in_graph(graph, query) if graph else []
 
 
 class Neo4jGraphRepository:
@@ -72,6 +81,12 @@ class Neo4jGraphRepository:
         query = "MATCH (n) WHERE n.scenario IS NOT NULL RETURN DISTINCT n.scenario AS s ORDER BY s"
         with self._driver.session() as session:
             return session.execute_read(lambda tx: [r["s"] for r in tx.run(query)])
+
+    def find_paths(self, query: PathQuery) -> list[PathCandidate]:
+        cypher = build_path_query(query)
+        validate_read_only_cypher(cypher.text)
+        with self._driver.session(default_access_mode=READ_ACCESS) as session:
+            return session.execute_read(_read_paths, cypher.text, cypher.params)
 
 
 def _replace_scenario(tx, scenario: Scenario) -> None:
@@ -122,6 +137,16 @@ def _read_scenario(tx, scenario_id: str) -> tuple[list[Node], list[Edge]]:
 def _read_node(tx, node_id: str) -> Node | None:
     record = tx.run("MATCH (n {id: $id}) RETURN properties(n) AS p LIMIT 1", id=node_id).single()
     return record_to_node(record["p"]) if record else None
+
+
+def _read_paths(tx, text: str, params: dict) -> list[PathCandidate]:
+    return [_record_to_candidate(r) for r in tx.run(text, **params)]
+
+
+def _record_to_candidate(record) -> PathCandidate:
+    nodes = [record_to_node(p) for p in record["nodes"]]
+    edges = [Edge(**e) for e in record["edges"]]
+    return PathCandidate(nodes=nodes, edges=edges)
 
 
 def record_to_node(props: dict) -> Node:

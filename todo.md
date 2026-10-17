@@ -16,29 +16,30 @@
 - [x] seed スクリプト
 
 ## Step 2: Attack Path 探索 (`feature/attack-path-engine`)
-- [ ] 経路探索（Cypher variable length path / networkx）
-- [ ] リスクスコアリング（設計書 §9.2）
-- [ ] Top N ランキング
+- [x] 経路探索（Cypher variable length path / networkx）
+- [x] リスクスコアリング（設計書 §9.2）
+- [x] Top N ランキング
 
 ## Step 3: LLM 統合 (`feature/llm-intent`)
-- [ ] intent 抽出（vLLM + Qwen, structured JSON）
-- [ ] ルールベース fallback（LLM 未起動時）
-- [ ] intent → Cypher 生成（テンプレート）
-- [ ] Cypher ガードレール（読み取り専用・ラベル/エッジ許可リスト・深さ制限）
-- [ ] 結果説明文生成
-- [ ] プロンプトを `backend/prompts/` に分離
+- [x] intent 抽出（vLLM + Qwen, structured JSON）
+- [x] ルールベース fallback（LLM 未起動時）
+- [x] intent → Cypher 生成（テンプレート）
+- [x] Cypher ガードレール（読み取り専用・ラベル/エッジ許可リスト・深さ制限）
+- [x] 結果説明文生成
+- [x] プロンプトを `backend/prompts/` に分離
 
 ## Step 4: Backend API (`feature/backend-api`)
-- [ ] `POST /query`
-- [ ] `GET /graph/scenario/{scenario_id}`
-- [ ] `GET /node/{node_id}`
-- [ ] `POST /seed`
-- [ ] API テスト
+- [x] `POST /query`
+- [x] `GET /graph/scenario/{scenario_id}`
+- [x] `GET /node/{node_id}`
+- [x] `POST /seed`
+- [x] API テスト
+- [x] 追加: `GET /scenarios`, `GET /ontology`, `GET /health`
 
 ## Step 5: Three.js 可視化 (`feature/threejs-viewer`)
-- [ ] ノード色・形状（設計書 §11.3）
-- [ ] Attack Path 太赤線ハイライト
-- [ ] hover / click（詳細表示）
+- [x] ノード色・形状（設計書 §11.3）
+- [x] Attack Path 太赤線ハイライト
+- [x] hover / click（詳細表示）
 
 ## Step 6: Streamlit UI (`feature/streamlit-ui`)
 - [ ] サイドバー（シナリオ / クエリ例 / しきい値 / 最大深さ）
@@ -51,3 +52,7 @@
 
 ## Issues
 - #2 Neo4j Community では読み取り専用ユーザー不可 → READ access mode + ガードレールで代替
+- #4 スコア式（全Σ）だと迂回経路が高スコア → impact を max 集計に変更
+- #5 Cypher LIMIT がスコアリング前に効く / ノード一意性の後段フィルタ
+- #7 小型 Qwen のハルシネーション → depth/edge は LLM に決めさせない、説明はテンプレート + AI 解説の二本立て
+- #10 components.html は一方向 → iframe 内詳細パネル + selectbox で代替
