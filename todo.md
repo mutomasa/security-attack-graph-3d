@@ -42,8 +42,8 @@
 - [x] hover / click（詳細表示）
 
 ## Step 6: Streamlit UI (`feature/streamlit-ui`)
-- [ ] サイドバー（シナリオ / クエリ例 / しきい値 / 最大深さ）
-- [ ] 3D ビュー埋め込み・結果サマリ・経路一覧・ノード詳細・Cypher 表示
+- [x] サイドバー（シナリオ / クエリ例 / しきい値 / 最大深さ）
+- [x] 3D ビュー埋め込み・結果サマリ・経路一覧・ノード詳細・Cypher 表示
 
 ## Step 7: デモ仕上げ (`feature/demo-polish`)
 - [ ] 起動スクリプト（vLLM / backend / streamlit）
