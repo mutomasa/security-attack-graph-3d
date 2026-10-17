@@ -17,7 +17,9 @@ class LLMError(RuntimeError):
 
 
 class LLMClient(Protocol):
-    def complete(self, prompt: str, *, json_mode: bool = False, max_tokens: int = 256) -> str: ...
+    def complete(
+        self, prompt: str, *, json_mode: bool = False, json_schema: dict | None = None, max_tokens: int = 256
+    ) -> str: ...
 
 
 class OpenAICompatibleClient:
@@ -26,22 +28,31 @@ class OpenAICompatibleClient:
         self._disable_thinking = settings.disable_thinking
         self._http = httpx.Client(base_url=settings.base_url, timeout=settings.timeout, transport=transport)
 
-    def complete(self, prompt: str, *, json_mode: bool = False, max_tokens: int = 256) -> str:
+    def complete(
+        self, prompt: str, *, json_mode: bool = False, json_schema: dict | None = None, max_tokens: int = 256
+    ) -> str:
+        payload = self._payload(prompt, json_mode, json_schema, max_tokens)
         try:
-            response = self._http.post("/chat/completions", json=self._payload(prompt, json_mode, max_tokens))
+            response = self._http.post("/chat/completions", json=payload)
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
             raise LLMError(f"LLM request failed: {exc}") from exc
 
-    def _payload(self, prompt: str, json_mode: bool, max_tokens: int) -> dict:
+    def _payload(self, prompt: str, json_mode: bool, json_schema: dict | None, max_tokens: int) -> dict:
         payload = {
             "model": self._model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.0,
             "max_tokens": max_tokens,
         }
-        if json_mode:
+        if json_schema:
+            # Guided decoding: vLLM constrains generation to the schema (enums, fixed array shapes).
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "output", "schema": json_schema, "strict": True},
+            }
+        elif json_mode:
             payload["response_format"] = {"type": "json_object"}
         if self._disable_thinking:
             payload["chat_template_kwargs"] = {"enable_thinking": False}

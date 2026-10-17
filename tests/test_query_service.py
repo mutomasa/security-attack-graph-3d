@@ -59,7 +59,7 @@ class FakeLLM:
     def __init__(self, replies):
         self.replies = list(replies)
 
-    def complete(self, prompt, *, json_mode=False, max_tokens=256):
+    def complete(self, prompt, **kwargs):
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply

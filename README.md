@@ -39,6 +39,7 @@ uv sync
 | `LLM_ENABLED` | `1` | `0` で LLM を使わない |
 | `VLLM_BASE_URL` / `VLLM_MODEL` | `http://localhost:8001/v1` / `Qwen/Qwen3-1.7B` | OpenAI 互換エンドポイント |
 | `LLM_DISABLE_THINKING` | `1` | Qwen3 の thinking 出力を抑止 |
+| `LLM_GUIDED` | `1` | JSON Schema によるガイド付きデコーディング（ノード名を enum で制約） |
 | `BACKEND_URL` | `http://localhost:8010` | Streamlit から見たバックエンド |
 
 ## LLM の評価
@@ -47,11 +48,18 @@ uv sync
 uv run python scripts/eval_llm.py   # デモ質問 7 問の intent 正答率・解説のノード名カバー率
 ```
 
-| モデル | intent | 解説（ポストチェック通過） |
-|---|---|---|
-| Qwen3-1.7B（既定） | 7/7 | 7/7 |
-| Qwen2.5-1.5B-Instruct | 7/7 | 3/7 |
-| Qwen2.5-7B-Instruct-AWQ | 7/7 | 0/7（ノード名を和訳。system 指示・出力例でも改善せず） |
+LLM の出力は JSON Schema によるガイド付きデコーディング（vLLM structured outputs）で制約している。
+intent の起点・終点はシナリオのノード名の enum、解説は経路の各ノードを順番どおりに固定（`prefixItems` + `const`）し、
+「最優先で塞ぐべき箇所」も経路上のノード名の enum。モデルが書けるのは各ノードで起きることの説明文だけなので、ノード名の和訳や取り違えが起きない。
+`LLM_GUIDED=0` で従来の自由記述（+ ノード名カバー率のポストチェック）に戻せる。
+
+| モデル | intent | 解説: ガイド付き | 解説: 自由記述 | 応答（ガイド付き） | GPU |
+|---|---|---|---|---|---|
+| Qwen3-1.7B（既定） | 7/7 | 7/7 | 7/7 | 4.3〜7.0s | 約 6.5GB |
+| Qwen2.5-7B-Instruct-AWQ | 7/7 | 7/7 | 0/7（ノード名を和訳） | 5.1〜9.6s | 約 7.7GB |
+| Qwen2.5-1.5B-Instruct | 7/7 | 未評価 | 3/7 | — | 約 6.5GB |
+
+7B-AWQ の方が根本原因の説明や塞ぐ箇所の選び方は的確だが、応答が設計目標（3〜10 秒）の上限に近く GPU の余裕も無いため、既定は Qwen3-1.7B。
 
 7B-AWQ を A1000 8GB で動かす場合: `VLLM_MODEL=Qwen/Qwen2.5-7B-Instruct-AWQ VLLM_MAX_LEN=2048 VLLM_GPU_UTIL=0.95 VLLM_EXTRA_ARGS=--enforce-eager ./scripts/run_vllm.sh`（GPU 約 7.7GB）
 

@@ -62,5 +62,6 @@ intent の種類
 
 ## LLM とガードレール
 - LLM（vLLM + Qwen）は intent の種類と起点・終点の抽出、説明文だけを担当する。Cypher は `cypher_builder` がテンプレートから組み立てる
+- LLM の出力は JSON Schema で制約する（ガイド付きデコーディング）。起点・終点はノード名の enum、`explanation` は経路の各ノードを順に並べた Markdown リスト（ノード名は経路から固定）+ 根本原因 + 最優先で塞ぐ箇所（経路上のノード名の enum）
 - 実行前に `cypher_guard` が書き込み・CALL・LOAD・複数文・許可外ラベル/エッジ・深さ上限超過を拒否し、READ access mode のセッションで実行する
 - LLM が使えない・不正な出力のときはルールベースの解析に切り替わる

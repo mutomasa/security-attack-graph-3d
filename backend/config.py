@@ -31,6 +31,7 @@ class LLMSettings:
     model: str
     timeout: float
     disable_thinking: bool = True
+    guided: bool = True
 
 
 def llm_settings() -> LLMSettings:
@@ -42,4 +43,6 @@ def llm_settings() -> LLMSettings:
         timeout=float(os.environ.get("LLM_TIMEOUT", "20")),
         # Qwen3 emits <think> blocks by default; vLLM forwards this flag to the chat template.
         disable_thinking=os.environ.get("LLM_DISABLE_THINKING", "1") == "1",
+        # Constrain LLM output with JSON Schema (node names as enums). Needs vLLM structured outputs.
+        guided=os.environ.get("LLM_GUIDED", "1") == "1",
     )
