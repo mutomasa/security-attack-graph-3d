@@ -6,3 +6,4 @@ __pycache__/
 .env
 docker/neo4j/data/
 docker/neo4j/logs/
+.playwright-mcp/
