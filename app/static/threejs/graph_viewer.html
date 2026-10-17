@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1020; overflow: hidden;
+    font-family: "Noto Sans JP", system-ui, sans-serif; color: #e5e7eb; }
+  #stage { position: relative; width: 100%; height: __HEIGHT__px; }
+  .node-label { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(11,16,32,.72);
+    white-space: nowrap; pointer-events: none; }
+  .node-label.on-path { color: #fecaca; border: 1px solid #ef4444; }
+  .node-label.dim { opacity: .25; }
+  #tooltip { position: absolute; display: none; pointer-events: none; padding: 4px 8px; border-radius: 4px;
+    background: #111827; border: 1px solid #374151; font-size: 12px; z-index: 3; }
+  #detail { position: absolute; top: 12px; right: 12px; width: 260px; max-height: calc(100% - 24px); overflow: auto;
+    display: none; padding: 12px 14px; border-radius: 8px; background: rgba(17,24,39,.94);
+    border: 1px solid #374151; font-size: 12px; z-index: 2; }
+  #detail h3 { margin: 0 0 6px; font-size: 14px; }
+  #detail table { width: 100%; border-collapse: collapse; }
+  #detail td { padding: 2px 0; vertical-align: top; }
+  #detail td:first-child { color: #9ca3af; padding-right: 8px; white-space: nowrap; }
+  #detail .close { float: right; cursor: pointer; color: #9ca3af; }
+  #legend { position: absolute; left: 12px; bottom: 12px; font-size: 11px; background: rgba(17,24,39,.8);
+    padding: 8px 10px; border-radius: 6px; line-height: 1.6; z-index: 2; }
+  #legend span.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  #hint { position: absolute; left: 12px; top: 12px; font-size: 11px; color: #9ca3af; z-index: 2; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="stage">
+  <div id="hint">ドラッグ: 回転 / ホイール: ズーム / クリック: 詳細</div>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div id="legend"></div>
+</div>
+<script id="graph-data" type="application/json">__GRAPH_DATA__</script>
+<script type="module">
+__VIEWER_SCRIPT__
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 """Pydantic schemas shared by the graph store, path engine and API."""
 
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -73,6 +74,24 @@ class PathQuery(BaseModel):
     candidate_limit: int = Field(default=500, ge=1, le=5000)
 
 
+class IntentType(StrEnum):
+    HIGHEST_RISK_PATH = "find_highest_risk_path"
+    LIST_ATTACK_PATHS = "list_attack_paths"
+    BLAST_RADIUS = "blast_radius"
+    REQUIRED_PERMISSIONS = "required_permissions"
+
+
+class Intent(BaseModel):
+    """Structured interpretation of a natural-language question (LLM intermediate output, design §10.2)."""
+
+    intent: IntentType = IntentType.HIGHEST_RISK_PATH
+    source: str | None = None
+    target: str | None = None
+    max_depth: int = Field(default=8, ge=1, le=MAX_PATH_DEPTH)
+    path_types: list[EdgeType] = Field(default_factory=lambda: list(ATTACK_EDGE_TYPES))
+    parsed_by: str = "rule"
+
+
 class PathCandidate(BaseModel):
     nodes: list[Node]
     edges: list[Edge]
@@ -95,3 +114,69 @@ def _ensure_edges_resolve(edges: list[Edge], ids: set[str]) -> None:
         missing = {e.source, e.target} - ids
         if missing:
             raise ValueError(f"edge {e.source}->{e.target} references unknown nodes: {sorted(missing)}")
+
+
+class QueryOptions(BaseModel):
+    top_n: int = Field(default=3, ge=1, le=50)
+    max_depth: int | None = Field(default=None, ge=1, le=MAX_PATH_DEPTH)
+    min_score: float = 0.0
+
+
+class QueryResult(BaseModel):
+    intent: Intent
+    cypher: str
+    paths: list[AttackPath]
+    summary: str
+    explanation: str | None = None
+    permissions: list[Node] = Field(default_factory=list)
+    reached: list[Node] = Field(default_factory=list)
+
+
+class QueryRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    scenario: str
+    top_n: int = Field(default=3, ge=1, le=50)
+    max_depth: int | None = Field(default=None, ge=1, le=MAX_PATH_DEPTH)
+    min_score: float = 0.0
+
+    def options(self) -> "QueryOptions":
+        return QueryOptions(top_n=self.top_n, max_depth=self.max_depth, min_score=self.min_score)
+
+
+class QueryResponse(BaseModel):
+    """API shape from design §12.1: `intent` is the intent name; the full Intent is in `intent_detail`."""
+
+    intent: IntentType
+    intent_detail: Intent
+    cypher: str
+    paths: list[AttackPath]
+    summary: str
+    explanation: str | None = None
+    permissions: list[Node] = Field(default_factory=list)
+    reached: list[Node] = Field(default_factory=list)
+
+    @classmethod
+    def from_result(cls, result: "QueryResult") -> "QueryResponse":
+        return cls(intent=result.intent.intent, intent_detail=result.intent, **result.model_dump(exclude={"intent"}))
+
+
+class ScenarioSummary(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    default_source: str
+    default_target: str
+
+
+class ScenarioGraph(BaseModel):
+    scenario: ScenarioSummary
+    nodes: list[Node]
+    edges: list[Edge]
+
+
+class NodeDetail(BaseModel):
+    node: Node
+    scenario_id: str
+    outgoing: list[Edge]
+    incoming: list[Edge]
+    neighbors: list[Node]
